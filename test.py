@@ -1,3 +1,5 @@
 from lib import *
+a=np.arange(10)
 
-print(1/0.2+1)
+print(a)
+print(1+[]      )
