@@ -95,4 +95,3 @@ class Nonlocal_Model():
 
 
 
-print(stiff_nonlocal_row_free(0.001,0.5,0.08))
