@@ -1,11 +1,12 @@
 import numpy as np
 import math
 import scipy
+from scipy.integrate import quad
 from itertools import product
 import matplotlib.pyplot as plt
 import plotly.figure_factory as ff
 from plotly import graph_objects
-
+import csv
 def accum(accmap, a, func=None, size=None, fill_value=0, dtype=None):
     """
     An accumulation function similar to Matlab's `accumarray` function.
