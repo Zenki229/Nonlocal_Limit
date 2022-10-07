@@ -1,5 +1,5 @@
 from lib import *
-
+from Matlab_Improve import *
 from Preparation_1D import *
 # Generate 1D Stiffness matrix for nonlocal operator with fractional kernel
 # Base on the paper of Tian, DU, 2013，SINUM，Link: https://epubs.siam.org/doi/10.1137/13091631X
@@ -93,14 +93,16 @@ def nonlocal_stiff_row_1D(Row,Node,FreeNodeInd,TypeBd):
 
 
 class Nonlocal_Model():
-    def __init__(self,Node,Elem,FreeNodeInd,q,h,s,delta,type_mod,type_Neumann):
-        self.Mass,Stiff=Mass_Stiff_1D(Node,Elem,FreeNodeInd,lambda x:1)
+    def __init__(self,Node,Elem,FreeNodeInd,h,s,delta,type_mod,type_Neumann):
+        Num_Node=Node.shape[0]
+        Idx=np.arange(Num_Node)
+        self.Mass,Stiff=Mass_Stiff_1D(Node,Elem,Idx,lambda x:1)
         Row=stiff_nonlocal_row_free(h,s,delta,type_mod)
         self.Stiff=Scale(type_mod,s)*nonlocal_stiff_row_1D(Row,Node,FreeNodeInd,type_Neumann)
-        if q!=0:
-            self.QMass,Stiff=Mass_Stiff_1D(Node,Elem,FreeNodeInd,q)
-        elif q==0:
-            self.QMass=np.zeros_like(self.Mass)
+        #if q!=0:
+        #    self.QMass,Stiff=Mass_Stiff_1D(Node,Elem,FreeNodeInd,q)
+        #elif q==0:
+        #    self.QMass=np.zeros_like(self.Mass)
 
 
 
