@@ -1,9 +1,10 @@
 import torch.utils.data
 from Nonlocal_fem_1D import *
 from net import *
-Trainsets=np.load('train.npy')
-BATCH_SIZE=int(Trainsets.shape[0]*0.02)
-train_loader=torch.utils.data.DataLoader(Trainsets,batch_size=BATCH_SIZE,shuffle=True)
+Model= joblib.load('my_trained_model.pkl')
+testsets=np.load('test.npy')
+BATCH_SIZE=1
+test_loader=torch.utils.data.DataLoader(testsets,batch_size=BATCH_SIZE,shuffle=True)
 s=0.75
 delta = 0.5
 M=100
@@ -43,32 +44,10 @@ Mass=T.Mass[np.ix_(BdNodeInd.flatten(),BdNodeInd.flatten())]
 DtN_Weak=np.dot(T.Stiff,U0.flatten())[BdNodeInd]
 DtN0 = np.linalg.solve(Mass, DtN_Weak.flatten()).reshape(1,-1)
 DtN0=torch.from_numpy(DtN0).to(torch.float32)
-model=CNN(N2,N1,N1,3)
-lr=0.00001
-epsi=0.00001
-optimizer=torch.optim.Adam(model.parameters(),lr=lr)
-lossF=nn.MSELoss()
-Epoch=50
-for epoch in np.arange(Epoch):
-    for enum,XY in enumerate(train_loader):
-        X=XY[:,:N1].reshape(-1,1,N1).to(torch.float32)
-        Y=XY[:,N1:].reshape(-1,1,N2).to(torch.float32)
-        out = model((Y-DtN0))/U00
-        loss = torch.mean(torch.sqrt(torch.sum((out - X) ** 2, dim=1) / N2))
-        # X = XY[:, :N1].to(torch.float32)
-        # Y = XY[:, N1:].to(torch.float32)
-        # out = model((Y-DtN0))/U00
-        # loss = torch.mean(torch.sqrt(torch.sum((out - X) ** 2, dim=1) / N2))
-        # # loss=lossF(out.to(torch.double),Y.to(torch.double))
-        loss.backward()
-        optimizer.step()
-        print(f'Epoch [{epoch + 1}/{Epoch}], Loss: {loss.item():.8f}')
-joblib.dump(model, 'my_trained_model.pkl', compress=0)
-# Epoch = 10
-# for epoch in np.arange(Epoch):
-#     XY = next(iter(train_loader))
-#     X = XY[:, :N]
-#     Y = XY[:, N:]
-#     out = Model(X)
-#     loss = lossF(out, Y)
-#     print (f'Epoch [{epoch+1}/{Epoch}], Loss: {loss.item():.4f}')
+XY=next(iter(test_loader))
+# print(XY)
+q = XY[:, :N1].to(torch.float32)
+Y = XY[:, N1:].to(torch.float32)
+qNN=Model((Y-DtN0))/U00
+plt.plot(X[FreeNodeInd].flatten(),q.flatten().detach().numpy(),X[FreeNodeInd].flatten(),qNN.flatten().detach().numpy())
+plt.show()

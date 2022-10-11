@@ -1,6 +1,6 @@
 from Nonlocal_fem_1D import *
-Trainfile='train.npy'
-trainadd=NpyAppendArray(Trainfile)
+Testfile='test.npy'
+testadd=NpyAppendArray(Testfile)
 s=0.75
 delta = 0.5
 M=100
@@ -28,7 +28,7 @@ RHS[BdNodeInd] = np.concatenate((DirichletFunc_Left(Node[LBdNodeInd]), Dirihchle
 B = T.Stiff
 B[BdNodeInd.flatten(), :] = 0
 B[BdNodeInd, BdNodeInd] = 1
-Count=10000
+Count=10
 for Epoch in np.arange(Count):
     Num_Potential=np.random.randint(1,10)
     sigma = np.random.random(size=Num_Potential) * 0.9 + 0.05
@@ -49,5 +49,5 @@ for Epoch in np.arange(Count):
     DtN_Weak=np.dot(T.Stiff,U0.flatten())[BdNodeInd]
     DtN = np.linalg.solve(Mass, DtN_Weak.flatten()).reshape(1,-1)
     aux=np.concatenate((Pot_Info,DtN),axis=1)
-    trainadd.append(aux)
+    testadd.append(aux)
    #print(Pot_Info.shape,DtN.shape)
