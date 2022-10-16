@@ -28,17 +28,17 @@ RHS[BdNodeInd] = np.concatenate((DirichletFunc_Left(Node[LBdNodeInd]), Dirihchle
 B = T.Stiff
 B[BdNodeInd.flatten(), :] = 0
 B[BdNodeInd, BdNodeInd] = 1
-Count=10
+Count=10000
 for Epoch in np.arange(Count):
-    Num_Potential=np.random.randint(1,10)
-    sigma = np.random.random(size=Num_Potential) * 0.9 + 0.05
+    Num_Potential=3
+    sigma = np.random.random(size=Num_Potential) * 0.1 + 0.05
     Center = np.random.random(size=Num_Potential) * 0.9 + 0.05
-    Scale = np.random.random(size=Num_Potential) * 0.1 - 0.05
+    Scale = 2
     def Potential(x):
         aux = 0
         for i in np.arange(Num_Potential):
-            aux+=Scale[i]*np.exp(-0.5*((x-Center[i])/sigma[i])**2)
-        return aux+1
+            aux+=Scale*np.exp(-0.5*((x-Center[i])/sigma[i])**2)
+        return aux
     Pot_Info = Potential(Node[FreeNodeInd.flatten()]).reshape(1,-1)
     QMass,Stiff=Mass_Stiff_1D(Node,Elem,FreeNodeInd,Potential)
     A=B

@@ -1,11 +1,11 @@
 import torch.utils.data
 from Nonlocal_fem_1D import *
 from net import *
-Model= joblib.load('my_trained_model.pkl')
-testsets=np.load('test.npy')
+Model= joblib.load('train_model6.pkl')
+testsets=np.load('train6.npy')
 BATCH_SIZE=1
 test_loader=torch.utils.data.DataLoader(testsets,batch_size=BATCH_SIZE,shuffle=True)
-s=0.75
+s=0.5
 delta = 0.5
 M=100
 X=np.linspace(-delta,1+delta,4*M+1)
@@ -20,11 +20,11 @@ LBdNodeInd=np.asarray(np.where(X<=0))
 RBdNodeInd=np.asarray(np.where(X>=1))
 h=1/(2*M)
 type_mod='frac'
-type_Neumann='NeumannInOut'
+type_Neumann='Dirichlet'
 def DirichletFunc_Left(x):
-    return np.exp(-x)
+    return np.cos(math.pi*x)
 def DirihchletFunc_Right(x):
-    return np.exp(x)-1
+    return np.sin(math.pi*x)+1
 T=Nonlocal_Model(Node,Elem,FreeNodeInd,h,s,delta,type_mod,type_Neumann)
 RHS = np.zeros_like(Node)
 RHS[BdNodeInd] = np.concatenate((DirichletFunc_Left(Node[LBdNodeInd]), DirihchletFunc_Right(Node[RBdNodeInd])), axis=1)
@@ -32,7 +32,7 @@ B = T.Stiff
 B[BdNodeInd.flatten(), :] = 0
 B[BdNodeInd, BdNodeInd] = 1
 def Potential(x):
-    return np.ones_like(x)
+    return np.zeros_like(x)
 Pot_Info = Potential(Node[FreeNodeInd.flatten()]).reshape(1,-1)
 QMass,Stiff=Mass_Stiff_1D(Node,Elem,FreeNodeInd,Potential)
 A=B
@@ -47,7 +47,7 @@ DtN0=torch.from_numpy(DtN0).to(torch.float32)
 XY=next(iter(test_loader))
 # print(XY)
 q = XY[:, :N1].to(torch.float32)
-Y = XY[:, N1:].to(torch.float32)
-qNN=Model((Y-DtN0))/U00
+Y = XY[:, N1:].to(torch.float32).reshape(-1,1,N2)
+qNN=Model((Y-DtN0.reshape(-1,1,N2)))/U00+torch.zeros_like(q)
 plt.plot(X[FreeNodeInd].flatten(),q.flatten().detach().numpy(),X[FreeNodeInd].flatten(),qNN.flatten().detach().numpy())
 plt.show()

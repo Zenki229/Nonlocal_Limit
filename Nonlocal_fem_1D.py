@@ -63,7 +63,7 @@ def  stiff_nonlocal_row_free(h,s,delta,type):
         row=h*row
     return row
 
-def nonlocal_stiff_row_1D(Row,Node,FreeNodeInd,TypeBd):
+def nonlocal_stiff_row_1D(Scale,Row,Node,FreeNodeInd,TypeBd):
     Num_Node=Node.shape[0]
     Num_Row=Row.shape[0]
     Band=np.concatenate((Row[-1:0:-1],Row))
@@ -76,9 +76,10 @@ def nonlocal_stiff_row_1D(Row,Node,FreeNodeInd,TypeBd):
         tail_local=StartInd+tail_global-i
         Stiff[i,head_global:tail_global+1]=Band[head_local:tail_local+1]
         Stiff[i,i]=-np.sum(Stiff[i,:])+Stiff[i,i]
+    Stiff=Scale*Stiff
     if TypeBd=='Dirichlet':
         StiffDirichlet=np.eye(Num_Node)
-        StiffDirichlet[FreeNodeInd,FreeNodeInd]=Stiff[FreeNodeInd,FreeNodeInd]
+        StiffDirichlet[FreeNodeInd.flatten(),:]=Stiff[FreeNodeInd.flatten(),:]
         return StiffDirichlet
     if TypeBd=='NeumannInOut':
         return Stiff
@@ -98,7 +99,7 @@ class Nonlocal_Model():
         Idx=np.arange(Num_Node)
         self.Mass,Stiff=Mass_Stiff_1D(Node,Elem,Idx,lambda x:1)
         Row=stiff_nonlocal_row_free(h,s,delta,type_mod)
-        self.Stiff=Scale(type_mod,s)*nonlocal_stiff_row_1D(Row,Node,FreeNodeInd,type_Neumann)
+        self.Stiff=nonlocal_stiff_row_1D(Scale(type_mod,s),Row,Node,FreeNodeInd,type_Neumann)
         #if q!=0:
         #    self.QMass,Stiff=Mass_Stiff_1D(Node,Elem,FreeNodeInd,q)
         #elif q==0:
