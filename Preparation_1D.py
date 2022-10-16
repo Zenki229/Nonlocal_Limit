@@ -74,12 +74,11 @@ def proj_l2_1D(vert,t,nf,Mass,f):
         x1 = vert[t[i][1]]
         aux = np.zeros(2)
         x = (x1-x0)*node+x0
-        for j in np.arange(0,2):
-            aux[j] = (x1-x0)*np.dot(W,(f(x)*fy(1,x,x0,x1)))
-        b[np.ix_(t[i][:])] += aux
-    b = b[np.ix_(nf)]
-    fh = conjgrad(Mass,b)
-    return fh
+        for j in np.arange(2):
+            aux[j] = (x1-x0)*np.dot(W,(f(x)*fy(j,x,x0,x1)))
+        b[t[i, :]] += aux
+    b = b[nf]
+    return b
 def conjgrad(A,b):
     tol = 1e-10
     x = b

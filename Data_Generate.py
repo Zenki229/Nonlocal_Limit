@@ -1,7 +1,7 @@
 from pde_model import *
 Trainfile='train.npy'
 trainadd=NpyAppendArray(Trainfile)
-s=0.5
+s=0.75
 delta = 0.5
 M=100
 X=np.linspace(-delta,1+delta,4*M+1)
@@ -16,18 +16,27 @@ h=1/(2*M)
 type_mod='frac'
 type_Neumann='Dirichlet'
 def DirichletFunc_Left(x):
-    return np.cos(math.pi*x)
+    return 3*x**2/100
 def DirihchletFunc_Right(x):
-    return np.sin(math.pi*x)+1
+    return 2*(x-1)**2/100
+
+
+def source(x):
+    return 10*np.sin(np.pi*x)
+    # return np.ones_like(x)*100
+
+
 T=Nonlocal_Model(Node,Elem,FreeNodeInd,h,s,delta,type_mod,type_Neumann)
-pde_model=PDE(Node,FreeNodeInd,BdNodeInd,LBdNodeInd,RBdNodeInd,T,DirichletFunc_Left,DirihchletFunc_Right)
-Count=1
+pde_model=PDE(Node,Elem,FreeNodeInd,BdNodeInd,LBdNodeInd,RBdNodeInd,T,DirichletFunc_Left,DirihchletFunc_Right,source)
+Count=3
+data_DtN=np.zeros((3,4))
 for Epoch in np.arange(Count):
     Num_Potential=3
-    sigma =np.random.rand(Num_Potential)*0.05
-    Center=np.random.rand(Num_Potential)*0.9+0.05
+    sigma = np.ones(Num_Potential)*0.25
+    Center=np.array([0.2, 0.5, 0.8])
     # Center = np.random.random(size=Num_Potential) * 0.9 + 0.05
-    Scale =np.ones(Num_Potential)*10
+    Scale =np.array([0.5, 1, 3])
+    # Scale = np.random.rand(Num_Potential)*10
     def Potential(x):
         aux = 0
         for i in np.arange(Num_Potential):
@@ -38,12 +47,16 @@ for Epoch in np.arange(Count):
     A=np.zeros_like(T.Stiff)
     A[np.ix_(FreeNodeInd.flatten(),FreeNodeInd.flatten())]+=QMass
     A+=T.Stiff
-    U0 = np.linalg.solve(A,pde_model.source.flatten())
+    U0 = np.linalg.solve(A,pde_model.RHS.flatten())
     # plt.plot(Node.flatten(),U0.flatten())
-    # plt.show()
     #Compute DtN
     Mass=T.Mass[np.ix_(BdNodeInd.flatten(),BdNodeInd.flatten())]
-    DtN_Weak=np.dot(T.Stiff,U0.flatten())[BdNodeInd]
-    DtN = np.linalg.solve(Mass, DtN_Weak.flatten()).reshape(1,-1)
-    aux=np.concatenate((Pot_Info,DtN),axis=1)
-    trainadd.append(aux)
+    DtN_Weak=np.dot(T.Stiff,U0.flatten())
+    DtN = np.linalg.solve(T.Mass, DtN_Weak.flatten())
+    # DtN = DtN[len(LBdNodeInd)+np.array([-2,0,1,2])].reshape(1,-1)
+    # data_DtN[Epoch,:]=DtN
+    plt.plot(DtN.flatten())
+    # aux=np.concatenate((Pot_Info,DtN),axis=1)
+    np.savetxt('data_DtN',data_DtN)
+    # trainadd.append(aux)
+plt.show()
