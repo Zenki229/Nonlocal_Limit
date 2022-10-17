@@ -1,13 +1,13 @@
 import torch.utils.data
 from pde_model import *
 from net import *
-Trainsets=np.load('train6.npy')
-train_model_file='train_model6.pkl'
+Trainsets=np.load('train.npy')
+train_model_file='train_model.pkl'
 BATCH_SIZE=10
 train_loader=torch.utils.data.DataLoader(Trainsets,batch_size=BATCH_SIZE,shuffle=True)
 s=0.5
-delta = 0.5
-M=100
+delta = 1
+M=400
 X=np.linspace(-delta,1+delta,4*M+1)
 Node=X.T
 Num_Node=Node.shape[0]
@@ -22,18 +22,23 @@ h=1/(2*M)
 type_mod='frac'
 type_Neumann='Dirichlet'
 def DirichletFunc_Left(x):
-    return np.cos(math.pi*x)
+    return 3*x**2/100
 def DirihchletFunc_Right(x):
-    return np.sin(math.pi*x)+1
+    return 2*(x-1)**2/100
+def source(x):
+    # return 10*np.sin(np.pi*x)
+    return np.ones_like(x)*10
 T=Nonlocal_Model(Node,Elem,FreeNodeInd,h,s,delta,type_mod,type_Neumann)
-pde_model=PDE(Node,FreeNodeInd,BdNodeInd,LBdNodeInd,RBdNodeInd,T,DirichletFunc_Left,DirihchletFunc_Right)
+StiffDirichlet=np.eye(Num_Node)
+StiffDirichlet[FreeNodeInd.flatten(),:]=T.Stiff[FreeNodeInd.flatten(),:]
+pde_model=PDE(Node,Elem,FreeNodeInd,BdNodeInd,LBdNodeInd,RBdNodeInd,T,DirichletFunc_Left,DirihchletFunc_Right,source)
 def Potential(x):
     return np.zeros_like(x)
 QMass,Stiff=Mass_Stiff_1D(Node,Elem,FreeNodeInd,Potential)
 A=np.zeros_like(T.Stiff)
 A[np.ix_(FreeNodeInd.flatten(),FreeNodeInd.flatten())]+=QMass
-A+=T.Stiff
-U0 = np.linalg.solve(A,pde_model.source.flatten())
+A+=StiffDirichlet
+U0 = np.linalg.solve(A,pde_model.RHS.flatten())
 U00=torch.from_numpy(U0[FreeNodeInd])
 #Compute DtN
 Mass=T.Mass[np.ix_(BdNodeInd.flatten(),BdNodeInd.flatten())]
@@ -49,7 +54,7 @@ lr=1e-5
 optimizer=torch.optim.NAdam(model.parameters(),lr=lr)
 schedule=torch.optim.lr_scheduler.StepLR(optimizer=optimizer,step_size=10,gamma=0.1)
 lossF=nn.MSELoss()
-Epoch=10000
+Epoch=100000
 loss_value=torch.zeros(Epoch)
 for epoch in np.arange(Epoch):
     error_std=10
