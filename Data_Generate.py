@@ -1,5 +1,5 @@
 from pde_model import *
-Trainfile='train.npy'
+Trainfile='train1.npy'
 trainadd=NpyAppendArray(Trainfile)
 s=0.5
 delta =1

@@ -1,9 +1,9 @@
 import torch.utils.data
 from pde_model import *
 from net import *
-Trainsets=np.load('train.npy')
+Trainsets=np.load('train1.npy')
 train_model_file='train_model.pkl'
-BATCH_SIZE=10
+BATCH_SIZE=200
 train_loader=torch.utils.data.DataLoader(Trainsets,batch_size=BATCH_SIZE,shuffle=True)
 s=0.5
 delta = 1
@@ -48,7 +48,7 @@ DtN0 = np.linalg.solve(Mass, DtN_Weak.flatten()).reshape(1,-1)
 DtN0=torch.from_numpy(DtN0).to(torch.float32)
 
 
-model=CNN2(N2,N1,N1+N2,5)
+model=CNN2(N2,N1,N1,5)
 joblib.dump(model, train_model_file, compress=0)
 lr=1e-5
 optimizer=torch.optim.NAdam(model.parameters(),lr=lr)

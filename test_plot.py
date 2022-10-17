@@ -3,7 +3,7 @@ from Nonlocal_fem_1D import *
 from net import *
 from pde_model import *
 Model= joblib.load('train_model.pkl')
-testsets=np.load('train.npy')
+testsets=np.load('train1.npy')
 BATCH_SIZE=1
 test_loader=torch.utils.data.DataLoader(testsets,batch_size=BATCH_SIZE,shuffle=True)
 s=0.5
